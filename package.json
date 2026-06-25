@@ -1,0 +1,21 @@
+{
+  "name": "midnight-convenience-store",
+  "version": "1.0.0",
+  "description": "深夜便利店主 - 一款24小时便利店模拟的命令行小游戏",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "play": "node index.js"
+  },
+  "keywords": [
+    "game",
+    "cli",
+    "convenience-store",
+    "simulation"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "chalk": "^4.1.2"
+  }
+}

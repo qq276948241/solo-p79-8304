@@ -35,10 +35,14 @@ const {
   printInventory,
   printDayEndReport,
   printGameOver,
-  printWelcomeMenu
+  printWelcomeMenu,
+  printEventIntro,
+  printEventChoices,
+  printEventResult
 } = require('./uiRenderer');
 const { saveGame, loadGame, hasSaveFile, deleteSave } = require('./storage');
 const { PRODUCTS, getProductById, CATEGORIES } = require('./products');
+const { rollEventTrigger, resolveEventChoice, applyEventResult } = require('./events');
 
 class GameLoop {
   constructor() {
@@ -256,6 +260,30 @@ class GameLoop {
     }
   }
 
+  async handleEvent(event) {
+    clearScreen();
+    printTitle();
+    printShopStatus(this.state);
+    printEventIntro(event);
+    printEventChoices(event);
+
+    while (true) {
+      const choice = await this.question(chalk.white('  请输入选项 (1-' + event.choices.length + '): '));
+      const choiceIdx = parseInt(choice) - 1;
+      if (choiceIdx >= 0 && choiceIdx < event.choices.length) {
+        const selectedChoice = event.choices[choiceIdx];
+        const result = resolveEventChoice(event, selectedChoice.id);
+        applyEventResult(this.state, result);
+        printEventResult(result);
+        break;
+      } else {
+        printMessage('无效选项，请重新选择。', 'warning');
+      }
+    }
+
+    await this.question(chalk.gray('  按回车键继续营业...'));
+  }
+
   async showRestockMenu() {
     while (true) {
       clearScreen();
@@ -419,9 +447,22 @@ class GameLoop {
     );
     this.nightlyStats.totalCustomers = this.customers.length;
 
+    const midPoint = Math.floor(this.customers.length / 2);
+    let eventTriggered = false;
+
     for (let i = 0; i < this.customers.length; i++) {
       if (isGameOver(this.state)) break;
       this.currentCustomerIndex = i;
+
+      if (!eventTriggered && i >= midPoint) {
+        const event = rollEventTrigger(this.state.day, 0.4);
+        if (event) {
+          eventTriggered = true;
+          await this.handleEvent(event);
+        }
+      }
+
+      if (isGameOver(this.state)) break;
       await this.handleCustomer(this.customers[i]);
     }
 

@@ -261,6 +261,78 @@ function printWelcomeMenu(hasSave) {
   console.log('');
 }
 
+function printEventIntro(event) {
+  console.log('');
+  console.log(chalk.bgRed.white.bold('         ╔════════════════════════════════════════════════════╗'));
+  console.log(chalk.bgRed.white.bold('         ║              ⚠  突  发  事  件  ⚠                ║'));
+  console.log(chalk.bgRed.white.bold('         ╚════════════════════════════════════════════════════╝'));
+  console.log('');
+  console.log(chalk.red.bold('  【' + event.name + '】'));
+  console.log('');
+  const lines = event.description.split('');
+  let wrapped = '';
+  let lineLen = 0;
+  for (const ch of lines) {
+    wrapped += ch;
+    lineLen += ch.charCodeAt(0) > 127 ? 2 : 1;
+    if (lineLen >= 54 && (ch === '，' || ch === '。' || ch === '？' || ch === '！' || ch === '；')) {
+      wrapped += '\n  ';
+      lineLen = 0;
+    }
+  }
+  console.log(chalk.white('  ' + wrapped));
+  console.log('');
+  console.log(chalk.gray('  ────────────────────────────────────────────────────────────'));
+  console.log('');
+}
+
+function printEventChoices(event) {
+  console.log(chalk.yellow.bold('  你该怎么办？'));
+  console.log('');
+  event.choices.forEach((choice, idx) => {
+    console.log(chalk.white('    ' + (idx + 1) + '. ') + chalk.white.bold(choice.text));
+  });
+  console.log('');
+}
+
+function printEventResult(result) {
+  console.log('');
+  console.log(chalk.gray('  ────────────────────────────────────────────────────────────'));
+  console.log('');
+
+  const lines = result.outcome.message.split('');
+  let wrapped = '';
+  let lineLen = 0;
+  for (const ch of lines) {
+    wrapped += ch;
+    lineLen += ch.charCodeAt(0) > 127 ? 2 : 1;
+    if (lineLen >= 54 && (ch === '，' || ch === '。' || ch === '？' || ch === '！' || ch === '；')) {
+      wrapped += '\n  ';
+      lineLen = 0;
+    }
+  }
+  console.log(chalk.magenta('  ' + wrapped));
+  console.log('');
+
+  if (result.outcome.money !== 0 || result.outcome.reputation !== 0) {
+    const parts = [];
+    if (result.outcome.money > 0) {
+      parts.push(chalk.green.bold('💰 +¥' + result.outcome.money));
+    } else if (result.outcome.money < 0) {
+      parts.push(chalk.red.bold('💰 ¥' + result.outcome.money));
+    }
+    if (result.outcome.reputation > 0) {
+      parts.push(chalk.green.bold('⭐ +' + result.outcome.reputation));
+    } else if (result.outcome.reputation < 0) {
+      parts.push(chalk.red.bold('⭐ ' + result.outcome.reputation));
+    }
+    if (parts.length > 0) {
+      console.log(chalk.white('    ' + parts.join('    ')));
+      console.log('');
+    }
+  }
+}
+
 module.exports = {
   clearScreen,
   printTitle,
@@ -276,6 +348,9 @@ module.exports = {
   printDayEndReport,
   printGameOver,
   printWelcomeMenu,
+  printEventIntro,
+  printEventChoices,
+  printEventResult,
   DIVIDER,
   DOUBLE_DIVIDER
 };

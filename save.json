@@ -1,0 +1,94 @@
+{
+  "savedAt": 1782405517240,
+  "state": {
+    "day": 1,
+    "money": 500,
+    "reputation": 50,
+    "inventory": {
+      "bento_a": {
+        "quantity": 5,
+        "expiryIn": 2
+      },
+      "onigiri": {
+        "quantity": 8,
+        "expiryIn": 1
+      },
+      "noodle": {
+        "quantity": 10,
+        "expiryIn": 30
+      },
+      "sandwich": {
+        "quantity": 5,
+        "expiryIn": 1
+      },
+      "bread": {
+        "quantity": 6,
+        "expiryIn": 3
+      },
+      "cola": {
+        "quantity": 15,
+        "expiryIn": 60
+      },
+      "coffee": {
+        "quantity": 10,
+        "expiryIn": 7
+      },
+      "water": {
+        "quantity": 20,
+        "expiryIn": 180
+      },
+      "milk": {
+        "quantity": 8,
+        "expiryIn": 5
+      },
+      "energy": {
+        "quantity": 6,
+        "expiryIn": 30
+      },
+      "tea": {
+        "quantity": 10,
+        "expiryIn": 30
+      },
+      "chips": {
+        "quantity": 10,
+        "expiryIn": 60
+      },
+      "chocolate": {
+        "quantity": 8,
+        "expiryIn": 90
+      },
+      "candy": {
+        "quantity": 15,
+        "expiryIn": 180
+      },
+      "icecream": {
+        "quantity": 8,
+        "expiryIn": -1
+      },
+      "nuts": {
+        "quantity": 5,
+        "expiryIn": 60
+      },
+      "tissue": {
+        "quantity": 10,
+        "expiryIn": 365
+      },
+      "mask": {
+        "quantity": 20,
+        "expiryIn": 365
+      },
+      "cigarette": {
+        "quantity": 5,
+        "expiryIn": 365
+      },
+      "beer": {
+        "quantity": 10,
+        "expiryIn": 60
+      }
+    },
+    "totalSales": 0,
+    "totalCustomers": 0,
+    "happyCustomers": 0,
+    "angryCustomers": 0
+  }
+}

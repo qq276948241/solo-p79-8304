@@ -1,4 +1,4 @@
-const { randomChoice } = require('./customerGenerator');
+const { weightedRandom } = require('./utils');
 
 const EVENTS = [
   {
@@ -179,16 +179,6 @@ const EVENTS = [
     ]
   }
 ];
-
-function weightedRandom(items) {
-  const totalWeight = items.reduce((sum, item) => sum + item.weight, 0);
-  let random = Math.random() * totalWeight;
-  for (const item of items) {
-    random -= item.weight;
-    if (random <= 0) return item;
-  }
-  return items[items.length - 1];
-}
 
 function getAvailableEvents(day) {
   return EVENTS.filter(e => day >= e.minDay);

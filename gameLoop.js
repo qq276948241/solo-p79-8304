@@ -1,5 +1,5 @@
-const readline = require('readline');
 const chalk = require('chalk');
+const Input = require('./input');
 const { CONFIG } = require('./config');
 const {
   createInitialState,
@@ -18,9 +18,9 @@ const {
   calculateCost,
   calculateCustomerAcceptance,
   processCounterOffer,
-  willCustomerWalkAway,
-  getCustomerResponse
+  willCustomerWalkAway
 } = require('./transaction');
+const { getCustomerResponse } = require('./dialogue');
 const {
   clearScreen,
   printTitle,
@@ -46,21 +46,12 @@ const { rollEventTrigger, resolveEventChoice, applyEventResult } = require('./ev
 
 class GameLoop {
   constructor() {
-    this.rl = readline.createInterface({
-      input: process.stdin,
-      output: process.stdout
-    });
+    this.input = new Input();
     this.state = null;
   }
 
-  question(prompt) {
-    return new Promise(resolve => {
-      this.rl.question(prompt, answer => resolve(answer.trim()));
-    });
-  }
-
   close() {
-    this.rl.close();
+    this.input.close();
   }
 
   async showMainMenu() {
@@ -72,35 +63,35 @@ class GameLoop {
       printWelcomeMenu(hasSave);
 
       if (hasSave) {
-        choice = await this.question(chalk.white('  请输入选项 (1-4): '));
+        choice = await this.input.question(chalk.white('  请输入选项 (1-4): '));
         if (choice === '1') {
           const result = loadGame();
           if (result.success) {
             this.state = result.state;
             printMessage('存档读取成功！继续您的深夜便利店之旅~', 'success');
-            await this.question(chalk.gray('  按回车键继续...'));
+            await this.input.pause();
             return true;
           } else {
             printMessage('读取存档失败: ' + result.error, 'error');
-            await this.question(chalk.gray('  按回车键继续...'));
+            await this.input.pause();
           }
         } else if (choice === '2') {
           this.state = createInitialState();
           return true;
         } else if (choice === '3') {
-          const confirm = await this.question(chalk.red('  确定要删除存档吗？此操作不可恢复！(y/N): '));
-          if (confirm.toLowerCase() === 'y') {
+          const confirmed = await this.input.confirm('确定要删除存档吗？此操作不可恢复！');
+          if (confirmed) {
             deleteSave();
             printMessage('存档已删除。', 'warning');
           } else {
             printMessage('操作已取消。', 'info');
           }
-          await this.question(chalk.gray('  按回车键继续...'));
+          await this.input.pause();
         } else if (choice === '4') {
           return false;
         }
       } else {
-        choice = await this.question(chalk.white('  请输入选项 (1-2): '));
+        choice = await this.input.question(chalk.white('  请输入选项 (1-2): '));
         if (choice === '1') {
           this.state = createInitialState();
           return true;
@@ -125,7 +116,7 @@ class GameLoop {
 
     if (!hasAllStock) {
       printMessage('库存不足，无法满足顾客需求。', 'warning');
-      await this.question(chalk.gray('  按回车键继续...'));
+      await this.input.pause();
       return this.handleCustomerLeft(customer, false);
     }
 
@@ -143,16 +134,15 @@ class GameLoop {
         '查看库存'
       ]);
 
-      const choice = await this.question(chalk.white('  请输入选项 (1-4): '));
+      const choice = await this.input.question(chalk.white('  请输入选项 (1-4): '));
 
       if (choice === '1') {
         currentOffer = basePrice;
       } else if (choice === '2') {
-        const input = await this.question(chalk.white('  请输入您的报价 (¥): '));
-        const parsed = parseInt(input);
-        if (isNaN(parsed) || parsed < 0) {
+        const num = await this.input.inputNumber('  请输入您的报价 (¥): ');
+        if (num === null) {
           printMessage('请输入有效的金额！', 'error');
-          await this.question(chalk.gray('  按回车键继续...'));
+          await this.input.pause();
           clearScreen();
           printTitle();
           printShopStatus(this.state);
@@ -162,14 +152,14 @@ class GameLoop {
           printOfferInfo(basePrice, costPrice, customer.budget);
           continue;
         }
-        currentOffer = parsed;
+        currentOffer = num;
       } else if (choice === '3') {
         return this.handleCustomerLeft(customer, false);
       } else if (choice === '4') {
         clearScreen();
         printTitle();
         printInventory(this.state);
-        await this.question(chalk.gray('  按回车键返回...'));
+        await this.input.pause();
         clearScreen();
         printTitle();
         printShopStatus(this.state);
@@ -188,7 +178,7 @@ class GameLoop {
       if (willCustomerWalkAway(customer, currentOffer)) {
         const response = getCustomerResponse(customer, false, true, null);
         printCustomerDialog(customer, response);
-        await this.question(chalk.gray('  按回车键继续...'));
+        await this.input.pause();
         return this.handleCustomerLeft(customer, false);
       }
 
@@ -199,7 +189,7 @@ class GameLoop {
         const response = getCustomerResponse(customer, true, false, null);
         printCustomerDialog(customer, response);
         printMessage('交易成功！收入 ¥' + currentOffer + '，利润 ¥' + (currentOffer - costPrice), 'success');
-        await this.question(chalk.gray('  按回车键继续...'));
+        await this.input.pause();
         return this.handleCustomerSatisfied(customer, currentOffer, costPrice);
       } else {
         const counter = processCounterOffer(customer, currentOffer);
@@ -207,7 +197,7 @@ class GameLoop {
         if (counter === null) {
           const response = getCustomerResponse(customer, false, true, null);
           printCustomerDialog(customer, response);
-          await this.question(chalk.gray('  按回车键继续...'));
+          await this.input.pause();
           return this.handleCustomerLeft(customer, false);
         }
 
@@ -217,10 +207,10 @@ class GameLoop {
         printMessage('(已还价 ' + customer.bargainAttempts + '/' + CONFIG.BARGAIN_ATTEMPTS + ' 次)', 'info');
         currentOffer = counter;
 
-        const acceptChoice = await this.question(chalk.white('  接受这个价格吗？(y/N): '));
-        if (acceptChoice.toLowerCase() === 'y') {
+        const accepted = await this.input.confirm('接受这个价格吗？');
+        if (accepted) {
           printMessage('交易成功！收入 ¥' + currentOffer + '，利润 ¥' + Math.max(0, currentOffer - costPrice), 'success');
-          await this.question(chalk.gray('  按回车键继续...'));
+          await this.input.pause();
           return this.handleCustomerSatisfied(customer, currentOffer, costPrice);
         }
       }
@@ -268,10 +258,9 @@ class GameLoop {
     printEventChoices(event);
 
     while (true) {
-      const choice = await this.question(chalk.white('  请输入选项 (1-' + event.choices.length + '): '));
-      const choiceIdx = parseInt(choice) - 1;
-      if (choiceIdx >= 0 && choiceIdx < event.choices.length) {
-        const selectedChoice = event.choices[choiceIdx];
+      const num = await this.input.chooseNumber(1, event.choices.length, chalk.white('  请输入选项 (1-' + event.choices.length + '): '));
+      if (num !== null) {
+        const selectedChoice = event.choices[num - 1];
         const result = resolveEventChoice(event, selectedChoice.id);
         applyEventResult(this.state, result);
         printEventResult(result);
@@ -281,7 +270,7 @@ class GameLoop {
       }
     }
 
-    await this.question(chalk.gray('  按回车键继续营业...'));
+    await this.input.pause('  按回车键继续营业...');
   }
 
   async showRestockMenu() {
@@ -299,7 +288,7 @@ class GameLoop {
         '退出游戏'
       ]);
 
-      const choice = await this.question(chalk.white('  请输入选项 (1-5): '));
+      const choice = await this.input.question(chalk.white('  请输入选项 (1-5): '));
 
       if (choice === '1') {
         await this.handleManualRestock();
@@ -314,16 +303,16 @@ class GameLoop {
         } else {
           printMessage('保存失败: ' + result.error, 'error');
         }
-        await this.question(chalk.gray('  按回车键继续...'));
+        await this.input.pause();
       } else if (choice === '5') {
-        const confirm = await this.question(chalk.yellow('  确定要退出游戏吗？(y/N): '));
-        if (confirm.toLowerCase() === 'y') {
+        const confirmed = await this.input.confirm('确定要退出游戏吗？');
+        if (confirmed) {
           this.quitRequested = true;
           return;
         }
       } else {
         printMessage('无效选项，请重新选择。', 'warning');
-        await this.question(chalk.gray('  按回车键继续...'));
+        await this.input.pause();
       }
     }
   }
@@ -354,14 +343,14 @@ class GameLoop {
     });
 
     console.log(chalk.gray('  输入格式: 商品编号(如 1-2) 数量, 或输入 q 返回'));
-    const input = await this.question(chalk.white('  请选择要进货的商品: '));
+    const input = await this.input.question(chalk.white('  请选择要进货的商品: '));
 
     if (input.toLowerCase() === 'q') return;
 
     const parts = input.split(/\s+/);
     if (parts.length < 2) {
       printMessage('输入格式错误！请输入"商品编号 数量"', 'error');
-      await this.question(chalk.gray('  按回车键继续...'));
+      await this.input.pause();
       return;
     }
 
@@ -371,7 +360,7 @@ class GameLoop {
 
     if (codeParts.length !== 2 || isNaN(quantity) || quantity <= 0) {
       printMessage('输入格式错误！', 'error');
-      await this.question(chalk.gray('  按回车键继续...'));
+      await this.input.pause();
       return;
     }
 
@@ -380,14 +369,14 @@ class GameLoop {
 
     if (catIdx < 0 || catIdx >= categories.length) {
       printMessage('分类编号错误！', 'error');
-      await this.question(chalk.gray('  按回车键继续...'));
+      await this.input.pause();
       return;
     }
 
     const catProducts = PRODUCTS.filter(p => p.category === categories[catIdx]);
     if (pIdx < 0 || pIdx >= catProducts.length) {
       printMessage('商品编号错误！', 'error');
-      await this.question(chalk.gray('  按回车键继续...'));
+      await this.input.pause();
       return;
     }
 
@@ -399,7 +388,7 @@ class GameLoop {
     } else {
       printMessage('进货失败: ' + result.reason, 'error');
     }
-    await this.question(chalk.gray('  按回车键继续...'));
+    await this.input.pause();
   }
 
   async handleQuickRestock() {
@@ -427,7 +416,7 @@ class GameLoop {
     } else {
       printMessage('资金不足或库存充足，无需补货。', 'warning');
     }
-    await this.question(chalk.gray('  按回车键继续...'));
+    await this.input.pause();
   }
 
   async runDay() {
@@ -483,7 +472,7 @@ class GameLoop {
       }
     }
 
-    await this.question(chalk.gray('  按回车键继续...'));
+    await this.input.pause();
   }
 
   async run() {
@@ -509,7 +498,7 @@ class GameLoop {
       printMessage('感谢游玩！', 'info');
     }
 
-    await this.question(chalk.gray('  按回车键退出...'));
+    await this.input.pause('  按回车键退出...');
     this.close();
   }
 }

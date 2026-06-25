@@ -85,7 +85,7 @@ function restockProduct(state, productId, quantity) {
     return { success: false, reason: '资金不足' };
   }
 
-  state.money -= totalCost;
+  state.money = Math.round(state.money - totalCost);
   addStock(state, productId, quantity);
   return { success: true, cost: totalCost };
 }
@@ -122,17 +122,17 @@ function processExpiry(state) {
     }
   });
 
-  state.money = Math.max(0, state.money - totalLoss);
+  state.money = Math.max(0, Math.round(state.money - totalLoss));
   return { expired, totalLoss };
 }
 
 function addMoney(state, amount) {
-  state.money += amount;
-  state.totalSales += amount;
+  state.money = Math.round(state.money + amount);
+  state.totalSales = Math.round(state.totalSales + amount);
 }
 
 function addReputation(state, amount) {
-  state.reputation = Math.max(0, Math.min(100, state.reputation + amount));
+  state.reputation = Math.max(0, Math.min(100, Math.round(state.reputation + amount)));
 }
 
 function incrementDay(state) {

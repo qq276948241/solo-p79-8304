@@ -271,6 +271,9 @@ class GameLoop {
     }
 
     await this.input.pause('  按回车键继续营业...');
+    clearScreen();
+    printTitle();
+    printShopStatus(this.state);
   }
 
   async showRestockMenu() {
@@ -452,6 +455,9 @@ class GameLoop {
       }
 
       if (isGameOver(this.state)) break;
+      clearScreen();
+      printTitle();
+      printShopStatus(this.state);
       await this.handleCustomer(this.customers[i]);
     }
 

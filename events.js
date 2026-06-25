@@ -210,10 +210,10 @@ function resolveEventChoice(event, choiceId) {
 
 function applyEventResult(state, result) {
   if (result.outcome.money !== 0) {
-    state.money = Math.max(0, state.money + result.outcome.money);
+    state.money = Math.max(0, Math.round(state.money + result.outcome.money));
   }
   if (result.outcome.reputation !== 0) {
-    state.reputation = Math.max(0, Math.min(100, state.reputation + result.outcome.reputation));
+    state.reputation = Math.max(0, Math.min(100, Math.round(state.reputation + result.outcome.reputation)));
   }
 }
 

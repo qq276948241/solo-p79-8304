@@ -5,7 +5,7 @@ function saveGame(state) {
   try {
     const saveData = {
       savedAt: Date.now(),
-      state: state
+      state: normalizeState(state)
     };
     const jsonString = JSON.stringify(saveData, null, 2);
     fs.writeFileSync(CONFIG.SAVE_FILE, jsonString, 'utf8');
@@ -13,6 +13,39 @@ function saveGame(state) {
   } catch (error) {
     return { success: false, error: error.message };
   }
+}
+
+function normalizeState(state) {
+  if (typeof state.money === 'number') {
+    state.money = Math.round(state.money);
+  }
+  if (typeof state.reputation === 'number') {
+    state.reputation = Math.round(state.reputation);
+  }
+  if (typeof state.totalSales === 'number') {
+    state.totalSales = Math.round(state.totalSales);
+  }
+  if (state.inventory && typeof state.inventory === 'object') {
+    Object.keys(state.inventory).forEach(pid => {
+      const item = state.inventory[pid];
+      if (item && typeof item.quantity === 'number') {
+        item.quantity = Math.round(item.quantity);
+      }
+      if (item && typeof item.expiryIn === 'number') {
+        item.expiryIn = Math.round(item.expiryIn);
+      }
+    });
+  }
+  if (typeof state.totalCustomers === 'number') {
+    state.totalCustomers = Math.round(state.totalCustomers);
+  }
+  if (typeof state.happyCustomers === 'number') {
+    state.happyCustomers = Math.round(state.happyCustomers);
+  }
+  if (typeof state.angryCustomers === 'number') {
+    state.angryCustomers = Math.round(state.angryCustomers);
+  }
+  return state;
 }
 
 function loadGame() {
@@ -25,6 +58,7 @@ function loadGame() {
     if (!saveData || !saveData.state) {
       return { success: false, error: '存档文件格式错误' };
     }
+    normalizeState(saveData.state);
     return { success: true, state: saveData.state, savedAt: saveData.savedAt };
   } catch (error) {
     return { success: false, error: error.message };
